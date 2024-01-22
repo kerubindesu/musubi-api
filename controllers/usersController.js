@@ -41,7 +41,12 @@ const createUser = asyncHandler(async (req, res) => {
     }
 
     // Check if roles is provided and is an array with at least one element
-    if (!Array.isArray(roles) || roles.length === 0) {
+    if (roles.length === 0) {
+        return res.status(400).json({ message: "Roles is required" });
+
+    }
+
+    if (!Array.isArray(roles)) {
         return res.status(400).json({ message: "Roles must be an array with at least one element" });
     }
 
@@ -55,12 +60,9 @@ const createUser = asyncHandler(async (req, res) => {
     // hash password
     const hashedPwd = await bcrypt.hash(password, 10) // salt rounds
 
-    const userObject = { 
-        username,
-        "password": hashedPwd, 
-        roles 
-    }
+    const userObject = { username, "password": hashedPwd, roles }
 
+    // Create and store new user 
     const user = await User.create(userObject)
 
     // create and store new user
