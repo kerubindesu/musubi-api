@@ -3,22 +3,42 @@ import User from "../models/User.js";
 import Post from "../models/Post.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
+import validator from "email-validator"
+import jwt from "jsonwebtoken";
 
-// @desc get all usersx
+// @desc get all users
 // @route GET /users
 // @access Private
-const getUsers = asyncHandler(async (req, res) => {
-    try {
-        const users = await User.find().select("-password").lean();
-        
-        if (users.length === 0) {
-            return res.status(400).json({ message: "no user found" });
-        }
+export const getUsers = asyncHandler(async (req, res) => {
+    const q = req.query.q
+    const limit = parseInt(req.query.limit) || 10
 
-        res.json(users);
-    } catch (err) {
-        // Handle any database error
-        console.error("error fetching users:", err);
+    let totalItems
+
+    try {
+        await User.find({}).countDocuments().then(async (count) => {
+            totalItems = count
+
+            await User.find({
+                $or: [
+                    { "name": { $regex: q, $options: "i" } },
+                    { "username": { $regex: q, $options: "i" }, },
+                    { "email": { $regex: q, $options: "i" }, },
+                    { "role": { $regex: q, $options: "i" } },
+                ]
+            })
+                .where({ "role": { $ne: 'admin' } },)
+                .select("-password -access_token -createDAt -updatedAt")
+                .sort({ "name": "asc" })
+                .limit(limit)
+                .then((users) => {
+                    if (users.length === 0) return res.status(200).json({ message: "no found user" })
+
+                    return res.status(200).json({ data: users, totalItems })
+                })
+        });
+    } catch (error) {
+        console.error("error fetching users:", error.message);
         res.status(500).json({ message: "internal server error" });
     }
 })
@@ -26,112 +46,126 @@ const getUsers = asyncHandler(async (req, res) => {
 // @desc create new user
 // @route GET /users
 // @access Private
-const createUser = asyncHandler(async (req, res) => {
-    const { username, password, roles } = req.body
+export const createUser = asyncHandler(async (req, res) => {
+    const { name, username, email, password } = req.body
 
     // confirm data
+
     // Check if username is provided
-    if (!username) {
-        return res.status(400).json({ message: "Username is required" });
-    }
+    if (!name) return res.status(400).json({ message: "name is required" });
+
+    // Check if username is provided
+    if (!username) return res.status(400).json({ message: "username is required" });
+
+    // Check if username is already exists
+    const duplicateUsername = await User.findOne({ username })
+    if (duplicateUsername) return res.status(400).json({ message: "username is already exists"})
+
+    // Check if email is provided
+    if (!email) return res.status(400).json({ message: "email is required" });
+
+    // Check if email is valid
+    const isValidEmail = validator.validate(email)
+    if (!isValidEmail) return res.status(400).json({ message: "email is not valid" })
+
+    // Check if email is already exists
+    const duplicateEmail = await User.findOne({ email })
+    if (duplicateEmail) return res.status(400).json({ message: "email is already exists"})
 
     // Check if password is provided
     if (!password) {
-        return res.status(400).json({ message: "Password is required" });
-    }
-
-    // Check if roles is provided and is an array with at least one element
-    if (roles.length === 0) {
-        return res.status(400).json({ message: "Roles is required" });
-
-    }
-
-    if (!Array.isArray(roles)) {
-        return res.status(400).json({ message: "Roles must be an array with at least one element" });
-    }
-
-    // check for duplicate
-    const duplicate = await User.findOne({ username }).lean().exec()
-
-    if (duplicate) {
-        return res.status(400).json({ message: "username is already exist"})
+        return res.status(400).json({ message: "password is required" });
     }
 
     // hash password
-    const hashedPwd = await bcrypt.hash(password, 10) // salt rounds
+    const hashedPassword = await bcrypt.hash(password, 10) // salt rounds
 
-    const userObject = { username, "password": hashedPwd, roles }
+    try {
+        const user = await User.create({ 
+            name,
+            username, 
+            email,
+            "password": hashedPassword
+        })
 
-    // Create and store new user 
-    const user = await User.create(userObject)
+        if (!user) return res.status(400).json({ message: "invalid user data recivied" })
 
-    // create and store new user
-    if (user) {
-        res.status(201).json({ message: `new user ${username} created`})
-    } else {
-        res.status(400).json({ message: "invalid user data recivied" })
+        return res.status(200).json({ message:  `${user.name} created successfully` })
+    } catch (error) {
+        return res.status(400).json({ message: error.message })
+    }
+})
+
+// @desc get single user by id
+// @route GET /user/:id
+// @access Private
+export const getUserById = asyncHandler(async (req, res) => {
+    const { id } = req.params
+
+    try {
+        const user = await User.findById(id)
+
+        return res.status(200).json(user)
+    } catch (error) {
+        return res.status(400).json({ message: error.message})
     }
 })
 
 // @desc update a user
 // @route PATCH /users
 // @access Private
-const updateUser = asyncHandler(async (req, res) => {
+export const updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params
-    const { username, roles, active, password} = req.body
+    const { name, username, email, password } = req.body
 
-    // confirm
-    // check if id is provided
-    if (!id) {
-        return res.status(400).json({ message: "id is required" });
+    // chek if user found
+    const user = await User.findById({_id: id})
+    if (!user) return res.status(400).json({ message: "no user found" })
+
+    // confirm data
+    // Check if username is provided
+    if (!name) return res.status(400).json({ message: "name is required" });
+
+    // Check if username is provided
+    if (!username) return res.status(400).json({ message: "username is required" });
+
+    // Check if username is already exists
+    const findByUsername = await User.findOne({ username })
+    if (findByUsername._id !== user._id) return res.status(400).json({ message: "username is already exists"})
+
+    // Check if email is provided
+    if (!email) return res.status(400).json({ message: "email is required" });
+
+    // Check if email is valid
+    const isValidEmail = validator.validate(email)
+    if (!isValidEmail) return res.status(400).json({ message: "email is not valid" })
+
+    // Check if email is already exists
+    const findByEmail = await User.findOne({ email })
+    if (findByEmail._id !== user._id) return res.status(400).json({ message: "email is already exists"})
+
+    try {
+        user.name = name
+        user.username = username
+        user.email = email
+        
+        if (password) {
+            // hash password
+            user.password = await bcrypt.hash(password, 10) // salt rounds
+        }
+
+        await user.save()
+        
+        return res.status(200).json({ message: `${user.name} updated successfully` })
+    } catch (error) {
+        return res.status(400).json({ message: error.message })
     }
-
-    // check if username is provided
-    if (!username) {
-        return res.status(400).json({ message: "Username is required" });
-    }
-
-    // check if roles is provided and is an array with at least one element
-    if (!Array.isArray(roles) || roles.length === 0) {
-        return res.status(400).json({ message: "Roles must be an array with at least one element" });
-    }
-
-    // check if type of active is boolean
-    if (typeof active !== "boolean") {
-        return res.status(400).json({ message: "active must be a boolean" });
-    }
-
-    const user = await User.findById(id).exec()
-
-    if (!user) {
-        return res.status(400).json({ message: "user not found"})
-    }
-
-    // check for duplicatex
-    const duplicate = await User.findOne({ username }).lean().exec()
-    // allow updates to the origin user
-    if (duplicate && duplicate?._id.toString() !== id) {
-        return res.status(409).json({ message: "duplicate username" })
-    }
-
-    user.username = username
-    user.roles = roles
-    user.active = active
-
-    if (password) {
-        // hash password
-        user.password = await bcrypt.hash(password, 10) // salt rounds
-    }
-
-    const updateUser = await user.save()
-
-    res.json({ message: `${updateUser.username } updated`})
 })
 
 // @desc delete a user
 // @route DELETE /users
 // @access Private
-const deleteUser = asyncHandler(async (req, res) => {
+export const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params
 
     if (!id) {
@@ -139,12 +173,6 @@ const deleteUser = asyncHandler(async (req, res) => {
     }
 
     const posts = await Post.findOne({ user: id }).lean().exec()
-    if (posts?.length) {
-        console.log("user has assigned posts")
-
-        await Post.updateMany({ user: id }, { $unset: { user: 1 } });
-        console.log(`posts user reference updated`)
-    }
 
     const user = await User.findById(id).exec()
 
@@ -152,11 +180,11 @@ const deleteUser = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "user not found"})
     }
 
-    const result = await user.deleteOne()
+    try {
+        const user = await User.findOneAndDelete({ _id: id })
 
-    const reply = `username ${result.username} with id ${result.id} deleted`
-
-    res.json({ message: reply })
+        return res.status(200).json({ message: `user with id ${ user._id } deleted`})
+    } catch (error) {
+        return res.status(400).json({ message: error.message })
+    }
 })
-
-export { getUsers, createUser, updateUser, deleteUser }

@@ -8,16 +8,15 @@ import errorHandler from "./middleware/errorHandler.js";
 import cookieParser from "cookie-parser";
 import cors from 'cors'
 import corsOptions from "./config/corsOptions.js";
-import connectDB from './config/dbConn.js';
 import mongoose from 'mongoose';
 import { logEvents } from './middleware/logger.js';
-import userRoutes from "./routes/userRoutes.js"
+import authRoutes from "./routes/auth.js"
+import userRoutes from "./routes/users.js"
+import postRoutes from "./routes/postRoutes.js"
 
 dotenv.config(); // konfigurasi dotenv
 
 console.log(process.env.NODE_ENV)
-
-connectDB()
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,10 +32,10 @@ app.use(express.json())
 app.use(cookieParser())
 
 app.use('/', express.static(join(__dirname, '/public')));
-
 app.use('/', root)
-
+app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
+app.use('/posts', postRoutes)
 
 app.all('*', (req, res) => {
     res.status(404)
@@ -52,12 +51,13 @@ app.all('*', (req, res) => {
 
 app.use(errorHandler)
 
-mongoose.connection.once("open", () => {
-    console.log("terkoneksi ke MongoDB.")
-    app.listen(PORT, () => console.log(`server berjalan di port ${PORT}`))
-})
+try {
+    await mongoose.connect(process.env.MONGO_URI)
+    console.log('sucessfuly connect to database')
 
-mongoose.connection.on("error", err => {
-    console.error(err)
-    logEvents(`${err.no}: ${err.code}\t${err.sycall}\t${err.hostname}`, "mongoErrlog.log")
-})
+    app.listen(PORT, () => {
+        console.log(`listening for request on port ${PORT}`)
+    })
+} catch (error) {
+    console.log(error)
+}

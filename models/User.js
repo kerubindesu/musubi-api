@@ -1,7 +1,16 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
     username: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    email: {
         type: String,
         required: true
     },
@@ -9,13 +18,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    roles: [{
+    refresh_token: {
         type: String,
-        default: "npc"
-    }],
-    active: {
-        type: Boolean,
-        default: true
+        default: null
     }
 })
 
