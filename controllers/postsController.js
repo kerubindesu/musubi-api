@@ -2,122 +2,184 @@ import mongoose from "mongoose";
 import Post from '../models/Post.js'
 import User from '../models/User.js'
 import asyncHandler from 'express-async-handler'
+import path from "path"
+import fs from "fs"
+import { title } from "process";
 
 // @desc Get all posts 
 // @route GET /posts
 // @access Private
-const getPosts = asyncHandler(async (req, res) => {
-    // Get all posts from MongoDB
-    const posts = await Post.find().lean()
+const getPosts = asyncHandler( async(req, res) => {
+    const search = req.query.search || "";
+    const page = parseInt(req.query.page) || 0;
+    const limit = parseInt(req.query.limit) || 10;
 
-    // If no posts 
-    if (!posts?.length) {
-        return res.status(400).json({ message: 'No posts found' })
+    try {
+        const users = await User.find({
+            $or: [
+                { "name": { $regex: search, $options: "i" } },
+                { "username": { $regex: search, $options: "i" } },
+                { "email": { $regex: search, $options: "i" } },
+            ]
+        }).select("_id")
+
+        const posts = await Post.find({
+            $or: [
+                { user: users },
+                { "title": { $regex: search, $options: "i" } },
+                { "text": { $regex: search, $options: "i" } },
+                { "image": { $regex: search, $options: "i" } },
+            ]
+        })
+        .skip(limit * page)
+        .sort({ createdAt: "desc" })
+        .limit(limit)
+
+        const totalRows = await Post.countDocuments({
+            $or: [
+                { user: users },
+                { "title": { $regex: search, $options: "i" } },
+                { "text": { $regex: search, $options: "i" } },
+                { "image": { $regex: search, $options: "i" } },
+            ]
+        })
+
+        // Menghitung totalPage berdasarkan totalRows dan limit
+        const totalPage = Math.ceil(totalRows/limit);
+
+        if (users.length === 0) {
+            return res.status(200).json({ message: "No found post" });
+        }
+
+        return res.status(200).json({ result: posts, page, totalRows, totalPage });
+    } catch (error) {
+        console.error("Error fetching posts:", error.message);
+        res.status(500).json({ message: "Internal server error" });
     }
-
-    // Add username to each post before sending the response 
-    // See Promise.all with map() here: https://youtu.be/4lqJBBEpjRE 
-    // You could also do this with a for...of loop
-    const postsWithUser = await Promise.all(posts.map(async (post) => {
-        const user = await User.findById(post.user).lean().exec()
-        return { ...post, username: user.username }
-    }))
-
-    res.json(postsWithUser)
 })
 
+// @desc Get post by _id 
+// @route GET /posts/:id
+// @access Private
+const getPostById = asyncHandler( async(req, res) => {
+    const { id } = req.params
+
+    try {
+        const post = await Post.findById(id)
+
+        return res.status(200).json(post)
+    } catch (error) {
+        return res.status(400).json({ message: error.message})
+    }
+})
+
+// under construction
 // @desc Create new post
 // @route POST /posts
 // @access Private
-const createPost = asyncHandler(async (req, res) => {
+const createPost = asyncHandler( async(req, res) => {
+    if (req.files === null) return res.status(400).json({ message: 'No file uploaded' })
     const { user, title, text } = req.body
+    const file = req.files.file
+    const fileSize = file.data.length
+    const extention = path.extname(file.name)
+    const fileName = file.md5 + extention // convert to md5
+    const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
 
-    // Confirm data
-    if (!user || !title || !text) {
-        return res.status(400).json({ message: 'All fields are required' })
-    }
+    const allowedType = [".png", ".jpg", ".jpeg"]
 
-    // Check for duplicate title
-    const duplicate = await Post.findOne({ title }).lean().exec()
+    if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images" })
 
-    if (duplicate) {
-        return res.status(409).json({ message: 'Duplicate post title' })
-    }
+    if (fileSize > (1000 * 5000)) return res.status(422).json({ message: "Image must be less than 5MB" })
 
-    // Create and store the new user 
-    const post = await Post.create({ user, title, text })
+    file.mv(`./public/images/${fileName}`, async(error) => {
+        if (error) return res.status(500).json({ message: error.message })
 
-    if (post) { // Created 
-        return res.status(201).json({ message: 'New post created' })
-    } else {
-        return res.status(400).json({ message: 'Invalid post data received' })
-    }
+        try {
+            await Post.create({ user, title, text, image: fileName, img_url: url })
 
+            res.status(201).json({ message: "Post created successfuly" })
+        } catch (error) {
+            console.log(error.message)
+        }
+    })
 })
 
 // @desc Update a post
 // @route PATCH /posts
 // @access Private
-const updatePost = asyncHandler(async (req, res) => {
-    const { id, user, title, text, completed } = req.body
+const updatePost = asyncHandler( async(req, res) => {
+    const { id } = req.params
 
     // Confirm data
-    if (!id || !user || !title || !text || typeof completed !== 'boolean') {
-        return res.status(400).json({ message: 'All fields are required' })
-    }
+    if (!id) return res.status(400).json({ message: 'Post id required' })
 
-    // Confirm post exists to update
+    // Confirm post exists to delete 
     const post = await Post.findById(id).exec()
 
-    if (!post) {
-        return res.status(400).json({ message: 'Post not found' })
+    if (!post) return res.status(404).json({ message: 'No data found' })
+
+    let fileName
+    if (req.files === null) {
+        fileName = post.image
+    } else {
+        const file = req.files.file
+        const fileSize = file.data.length
+        const extention = path.extname(file.name)
+        fileName = file.md5 + extention // convert to md5
+
+        const allowedType = [".png", ".jpg", ".jpeg"]
+        
+        if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images" })
+
+        const filePath = `./public/images/${post.image}`
+        fs.unlinkSync(filePath)
+
+        file.mv(`./public/images/${fileName}`, (error) => {
+            if (error) return res.status(500).json({ message: error.message })
+        })
     }
 
-    // Check for duplicate title
-    const duplicate = await Post.findOne({ title }).lean().exec()
+    const { title, text } = req.body
+    const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
 
-    // Allow renaming of the original post 
-    if (duplicate && duplicate?._id.toString() !== id) {
-        return res.status(409).json({ message: 'Duplicate post title' })
+    try {
+        await post.updateOne({ title, text, image: fileName, img_url: url })
+
+        return res.status(200).json({ message: "Post updated successfuly" })
+    } catch (error) {
+        console.log(error.message)
     }
-
-    post.user = user
-    post.title = title
-    post.text = text
-    post.completed = completed
-
-    const updatedPost = await post.save()
-
-    res.json(`'${updatedPost.title}' updated`)
 })
 
 // @desc Delete a post
 // @route DELETE /posts
 // @access Private
-const deletePost = asyncHandler(async (req, res) => {
-    const { id } = req.body
+const deletePost = asyncHandler( async(req, res) => {
+    const { id } = req.params
 
     // Confirm data
-    if (!id) {
-        return res.status(400).json({ message: 'Post ID required' })
-    }
+    if (!id) return res.status(400).json({ message: 'Post id required' })
 
     // Confirm post exists to delete 
     const post = await Post.findById(id).exec()
 
-    if (!post) {
-        return res.status(400).json({ message: 'Post not found' })
+    if (!post) return res.status(404).json({ message: 'No data found' })
+
+    try {
+        const filePath = `./public/images/${post.image}`
+        fs.unlinkSync(filePath)
+
+        await post.deleteOne()
+        res.status(200).json({ message: "Post deleted successfuly"})
+    } catch (error) {
+        console.log(error.message)
     }
-
-    const result = await post.deleteOne()
-
-    const reply = `Post '${result.title}' with ID ${result._id} deleted`
-
-    res.json(reply)
 })
 
 export {
     getPosts,
+    getPostById,
     createPost,
     updatePost,
     deletePost

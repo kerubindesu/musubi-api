@@ -1,18 +1,19 @@
-import dotenv from 'dotenv'
+import dotenv from "dotenv"
 import express from "express";
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import root from "./routes/root.js";
 import { logger } from "./middleware/logger.js";
 import errorHandler from "./middleware/errorHandler.js";
 import cookieParser from "cookie-parser";
-import cors from 'cors'
+import cors from "cors"
 import corsOptions from "./config/corsOptions.js";
-import mongoose from 'mongoose';
-import { logEvents } from './middleware/logger.js';
+import mongoose from "mongoose";
+import { logEvents } from "./middleware/logger.js";
 import authRoutes from "./routes/auth.js"
-import userRoutes from "./routes/users.js"
-import postRoutes from "./routes/postRoutes.js"
+import userRoutes from "./routes/user.js"
+import postRoutes from "./routes/post.js"
+import fileUpload from "express-fileupload";
 
 dotenv.config(); // konfigurasi dotenv
 
@@ -27,9 +28,11 @@ app.use(logger)
 
 app.use(cors(corsOptions))
 
+app.use(cookieParser())
+
 app.use(express.json())
 
-app.use(cookieParser())
+app.use(fileUpload())
 
 app.use('/', express.static(join(__dirname, '/public')));
 app.use('/', root)

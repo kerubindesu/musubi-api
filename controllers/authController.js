@@ -3,15 +3,13 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-export const Login = asyncHandler(async (req, res) => {
-    console.log("user1")
-
+export const Login = asyncHandler( async(req, res) => {
     try {
-        const user = await User.findOne({ email: req.body.email })
-        console.log(user)
+        const user = await User.findOne({ username: req.body.username })
+        
         const match = await bcrypt.compare(req.body.password, user.password)
 
-        if (!match) return res.status(400).json({ message: "wrong password"})
+        if (!match) return res.status(400).json({ message: "Wrong password"})
 
         const uid = user._id
         const name = user.name
@@ -27,16 +25,19 @@ export const Login = asyncHandler(async (req, res) => {
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000,
-            // secure: true
+            secure: true,
+            sameSite: 'None'
         })
+
+        console.log(accessToken)
 
         res.json({ accessToken })
     } catch (error) {
-        res.status(404).json({ message: "email not found" })
+        res.status(404).json({ message: "Username not found" })
     }
 })
 
-export const refreshToken = asyncHandler(async (req, res) => {
+export const refreshToken = asyncHandler( async(req, res) => {
     try {
         const refreshToken = req.cookies.refreshToken
 
@@ -47,7 +48,10 @@ export const refreshToken = asyncHandler(async (req, res) => {
         if (!user) return res.sendStatus(403)
 
         jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (error, decoded) => {
-            if (!user) return res.sendStatus(403)
+            if (error) {
+                console.log(error);
+                return res.sendStatus(403);
+            }
 
             const uid = user._id
             const name = user.name
@@ -63,7 +67,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
     }
 })
 
-export const Logout = asyncHandler(async (req, res) => {
+export const Logout = asyncHandler( async(req, res) => {
     const refreshToken = req.cookies.refreshToken
 
     if (!refreshToken) return res.sendStatus(204)
@@ -79,4 +83,14 @@ export const Logout = asyncHandler(async (req, res) => {
     res.clearCookie("refreshToken") // delete cookie
 
     return res.sendStatus(200)
+})
+
+export const getUserAuth = asyncHandler( async(req, res) => {
+    const refreshToken = req.cookies.refreshToken
+
+    if (refreshToken) {
+        const user = await User.findOne({refresh_token: refreshToken}).select("-_id -password -email -refresh_token -createDAt -updatedAt")
+
+        return res.status(200).json({user})
+    }
 })
