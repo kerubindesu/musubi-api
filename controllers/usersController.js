@@ -96,7 +96,7 @@ export const createUser = asyncHandler(async (req, res) => {
 
         if (!user) return res.status(400).json({ message: "Invalid user data recivied" })
 
-        return res.status(200).json({ message:  `${user.name} created successfuly` })
+        return res.status(200).json({ message:  `${user.name} created successfully` })
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
@@ -137,7 +137,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 
     // Check if username is already exists
     const findByUsername = await User.findOne({ username })
-    if (findByUsername._id !== user._id) return res.status(400).json({ message: "Username is already exists"})
+    if (findByUsername && findByUsername.id !== user.id) return res.status(400).json({ message: "Username is already exists"})
 
     // Check if email is provided
     if (!email) return res.status(400).json({ message: "Email is required" });
@@ -148,7 +148,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 
     // Check if email is already exists
     const findByEmail = await User.findOne({ email })
-    if (findByEmail._id !== user._id) return res.status(400).json({ message: "Email is already exists"})
+    if (findByEmail && findByEmail.id !== user.id) return res.status(400).json({ message: "Email is already exists"})
 
     try {
         user.name = name
@@ -160,7 +160,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 
         await user.save()
         
-        return res.status(200).json({ message: `${user.name} updated successfuly` })
+        return res.status(200).json({ message: `${user.name} updated successfully` })
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
