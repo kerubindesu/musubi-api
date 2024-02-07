@@ -47,7 +47,7 @@ const getPosts = asyncHandler( async(req, res) => {
         // Menghitung totalPage berdasarkan totalRows dan limit
         const totalPage = Math.ceil(totalRows/limit);
 
-        if (users.length === 0) {
+        if (posts.length === 0) {
             return res.status(200).json({ message: "No found post" });
         }
 
