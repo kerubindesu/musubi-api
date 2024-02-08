@@ -79,7 +79,10 @@ const getPostById = asyncHandler( async(req, res) => {
 // @access Private
 const createPost = asyncHandler( async(req, res) => {
     if (req.files === null) return res.status(400).json({ message: 'No file uploaded' })
-    const { user, title, text } = req.body
+    const { username, title, text } = req.body
+
+    const user = User.findOne({ username: username }).exec()
+    
     const file = req.files.file
     const fileSize = file.data.length
     const extention = path.extname(file.name)
