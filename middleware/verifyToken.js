@@ -8,7 +8,7 @@ export const verifyToken = (req, res, next) => {
 
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
         if (error) return res.sendStatus(403)
-        req.email = decoded.email
-        next()        
+        req.username = decoded.username
+        next()
     })
 }

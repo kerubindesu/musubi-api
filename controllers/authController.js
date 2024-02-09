@@ -25,8 +25,8 @@ export const Login = asyncHandler( async(req, res) => {
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000,
-            secure: true,
-            sameSite: 'None'
+            // secure: true,
+            // sameSite: 'None'
         })
 
         console.log(accessToken)
@@ -40,6 +40,7 @@ export const Login = asyncHandler( async(req, res) => {
 export const refreshToken = asyncHandler( async(req, res) => {
     try {
         const refreshToken = req.cookies.refreshToken
+        console.log(refreshToken)
 
         if (!refreshToken) return res.sendStatus(401)
 

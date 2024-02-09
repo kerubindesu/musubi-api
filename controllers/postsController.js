@@ -79,33 +79,39 @@ const getPostById = asyncHandler( async(req, res) => {
 // @access Private
 const createPost = asyncHandler( async(req, res) => {
     if (req.files === null) return res.status(400).json({ message: 'No file uploaded' })
+    
     const { username, title, text } = req.body
 
-    const user = User.findOne({ username: username }).exec()
+    try {
+        const user = await User.findOne({username})
+        
+        const file = req.files.file
+        const fileSize = file.data.length
+        const extention = path.extname(file.name)
+        const fileName = file.md5 + extention // convert to md5
+        const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
+
+        const allowedType = [".png", ".jpg", ".jpeg"]
+
+        if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images" })
+
+        if (fileSize > (1000 * 5000)) return res.status(422).json({ message: "Image must be less than 5MB" })
+
+        file.mv(`./public/images/${fileName}`, async(error) => {
+            if (error) return res.status(500).json({ message: error.message })
+
+            try {
+                await Post.create({ user: user, title, text, image: fileName, img_url: url })
+
+                res.status(201).json({ message: "Post created successfuly" })
+            } catch (error) {
+                console.log(error.message)
+            }
+        })
+    } catch (error) {
+        console.log(error.message)
+    }
     
-    const file = req.files.file
-    const fileSize = file.data.length
-    const extention = path.extname(file.name)
-    const fileName = file.md5 + extention // convert to md5
-    const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
-
-    const allowedType = [".png", ".jpg", ".jpeg"]
-
-    if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images" })
-
-    if (fileSize > (1000 * 5000)) return res.status(422).json({ message: "Image must be less than 5MB" })
-
-    file.mv(`./public/images/${fileName}`, async(error) => {
-        if (error) return res.status(500).json({ message: error.message })
-
-        try {
-            await Post.create({ user, title, text, image: fileName, img_url: url })
-
-            res.status(201).json({ message: "Post created successfuly" })
-        } catch (error) {
-            console.log(error.message)
-        }
-    })
 })
 
 // @desc Update a post
