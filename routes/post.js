@@ -4,8 +4,8 @@ import { verifyToken } from "../middleware/verifyToken.js";
 
 const router = express.Router()
 
-router.get("/", verifyToken, getPosts)
-router.post("/", createPost)
+router.get("/", getPosts)
+router.post("/", verifyToken, createPost)
 router.get("/:id", verifyToken, getPostById)
 router.patch("/:id", verifyToken, updatePost)
 router.delete("/:id", verifyToken, deletePost)
