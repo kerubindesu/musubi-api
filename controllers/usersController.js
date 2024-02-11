@@ -56,29 +56,29 @@ export const createUser = asyncHandler(async (req, res) => {
     const { name, username, email, password } = req.body
 
     // confirm data
-
-    // Check if username is provided
+    // validate name
     if (!name) return res.status(400).json({ message: "Name is required" });
 
-    // Check if username is provided
+    // validate username
     if (!username) return res.status(400).json({ message: "Username is required" });
 
-    // Check if username is already exists
-    const duplicateUsername = await User.findOne({ username })
-    if (duplicateUsername) return res.status(400).json({ message: "Username is already exists"})
+    if (username.length < 5) return res.status(400).json({ message: "Username must be at least 5 characters" });
 
-    // Check if email is provided
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) return res.status(400).json({ message: "Username may only contain letters, numbers, underscores and hypenes" });
+
+    const duplicateUsername = await User.findOne({ username })
+    if (duplicateUsername) return res.status(400).json({ message: "Username already exist"})
+
+    // validate email
     if (!email) return res.status(400).json({ message: "Email is required" });
 
-    // Check if email is valid
     const isValidEmail = validator.validate(email)
     if (!isValidEmail) return res.status(400).json({ message: "Email is not valid" })
 
-    // Check if email is already exists
     const duplicateEmail = await User.findOne({ email })
     if (duplicateEmail) return res.status(400).json({ message: "Email is already exists"})
 
-    // Check if password is provided
+    // validate password
     if (!password) {
         return res.status(400).json({ message: "Password is required" });
     }
