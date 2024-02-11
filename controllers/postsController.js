@@ -78,9 +78,16 @@ const getPostById = asyncHandler( async(req, res) => {
 // @route POST /posts
 // @access Private
 const createPost = asyncHandler( async(req, res) => {
-    if (req.files === null) return res.status(400).json({ message: 'No file uploaded' })
-
     const { username, title, text } = req.body
+
+    if (!username) return res.status(403).json({ message: 'Forbidden' })
+
+    if (!title) return res.status(403).json({ message: 'Title is required' })
+    
+    if (!text) return res.status(403).json({ message: 'Text is required' })
+
+
+    if (req.files === null) return res.status(400).json({ message: 'No file uploaded' })
 
     try {
         const user = await User.findOne({username})
@@ -109,7 +116,7 @@ const createPost = asyncHandler( async(req, res) => {
             }
         })
     } catch (error) {
-        console.log(error.message)
+        return res.status(400).json({ message: error.message })
     }
     
 })
@@ -120,8 +127,14 @@ const createPost = asyncHandler( async(req, res) => {
 const updatePost = asyncHandler( async(req, res) => {
     const { id } = req.params
 
+    const { title, text } = req.body
+
     // Confirm data
     if (!id) return res.status(400).json({ message: 'Post id required' })
+
+    if (!title) return res.status(403).json({ message: 'Title is required' })
+    
+    if (!text) return res.status(403).json({ message: 'Text is required' })
 
     // Confirm post exists to delete 
     const post = await Post.findById(id).exec()
@@ -141,6 +154,8 @@ const updatePost = asyncHandler( async(req, res) => {
         
         if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images" })
 
+        if (fileSize > (1000 * 5000)) return res.status(422).json({ message: "Image must be less than 5MB" })
+
         const filePath = `./public/images/${post.image}`
         fs.unlinkSync(filePath)
 
@@ -149,7 +164,6 @@ const updatePost = asyncHandler( async(req, res) => {
         })
     }
 
-    const { title, text } = req.body
     const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
 
     try {
@@ -157,7 +171,7 @@ const updatePost = asyncHandler( async(req, res) => {
 
         return res.status(200).json({ message: "Post updated successfuly" })
     } catch (error) {
-        console.log(error.message)
+        return res.status(400).json({ message: error.message })
     }
 })
 
@@ -182,7 +196,7 @@ const deletePost = asyncHandler( async(req, res) => {
         await post.deleteOne()
         res.status(200).json({ message: "Post deleted successfuly"})
     } catch (error) {
-        console.log(error.message)
+        return res.status(400).json({ message: error.message })
     }
 })
 
