@@ -13,6 +13,7 @@ import { logEvents } from "./middleware/logger.js";
 import authRoutes from "./routes/auth.js"
 import userRoutes from "./routes/user.js"
 import postRoutes from "./routes/post.js"
+import configRoute from "./routes/config.js"
 import fileUpload from "express-fileupload";
 
 dotenv.config(); // konfigurasi dotenv
@@ -39,6 +40,7 @@ app.use('/', root)
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
 app.use('/posts', postRoutes)
+app.use('config', configRoute)
 
 app.all('*', (req, res) => {
     res.status(404)

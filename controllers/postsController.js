@@ -4,7 +4,6 @@ import User from '../models/User.js'
 import asyncHandler from 'express-async-handler'
 import path from "path"
 import fs from "fs"
-import { title } from "process";
 
 // @desc Get all posts 
 // @route GET /posts

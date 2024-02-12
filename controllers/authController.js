@@ -89,9 +89,15 @@ export const Logout = asyncHandler( async(req, res) => {
 export const getUserAuth = asyncHandler( async(req, res) => {
     const refreshToken = req.cookies.refreshToken
 
-    if (refreshToken) {
-        const user = await User.findOne({refresh_token: refreshToken}).select("-_id -password -email -refresh_token -createDAt -updatedAt")
-
-        return res.status(200).json({user})
+    try {
+        if (refreshToken) {
+            const user = await User.findOne({refresh_token: refreshToken}).select("-_id -password -email -refresh_token -createDAt -updatedAt")
+    
+            return res.status(200).json({user})
+        } else {
+            return res.sendStatus(204)
+        }
+    } catch (error) {
+        console.log(error)
     }
 })
