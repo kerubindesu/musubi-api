@@ -71,7 +71,8 @@ const updateLogo =  async(req, res) => {
 
             if (fileSize > (1000 * 5000)) return res.status(422).json({ message: "Image must be less than 5MB" })
 
-            const filePath = `./public/images/${logo.image}`
+            const filePath = `./public/logo/${logo.image}`
+            console.log(fs.existsSync(filePath))
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
             }

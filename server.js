@@ -15,6 +15,7 @@ import userRoutes from "./routes/user.js"
 import postRoutes from "./routes/post.js"
 import configRoute from "./routes/config.js"
 import logoRoute from "./routes/logo.js"
+import menuRoute from "./routes/menu.js"
 import fileUpload from "express-fileupload";
 
 dotenv.config(); // konfigurasi dotenv
@@ -43,6 +44,7 @@ app.use('/users', userRoutes)
 app.use('/posts', postRoutes)
 app.use('/config', configRoute)
 app.use('/logo', logoRoute)
+app.use('/menus', menuRoute)
 
 app.all('*', (req, res) => {
     res.status(404)
