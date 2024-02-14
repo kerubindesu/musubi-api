@@ -147,7 +147,10 @@ const updatePost = asyncHandler( async(req, res) => {
         const file = req.files.file
         const fileSize = file.data.length
         const extention = path.extname(file.name)
-        fileName = file.md5 + extention // convert to md5
+        const currentDateTime = new Date();
+        const timestamp = currentDateTime.toISOString().replace(/[-:]/g, '').replace('T', '').split('.')[0];
+        const date = new Date()
+        fileName = file.md5 + timestamp + post.user + extention // convert to md5
 
         const allowedType = [".png", ".jpg", ".jpeg"]
         
@@ -156,7 +159,9 @@ const updatePost = asyncHandler( async(req, res) => {
         if (fileSize > (1000 * 5000)) return res.status(422).json({ message: "Image must be less than 5MB" })
 
         const filePath = `./public/images/${post.image}`
-        fs.unlinkSync(filePath)
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
 
         file.mv(`./public/images/${fileName}`, (error) => {
             if (error) return res.status(500).json({ message: error.message })

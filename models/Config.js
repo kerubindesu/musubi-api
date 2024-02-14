@@ -19,8 +19,8 @@ const configSchema = new mongoose.Schema({
         text: String
     },
     logo_url: String,
-    width: Number,
-    height: Number,
+    // width: Number,
+    // height: Number,
     description: String,
     site_name: String,
     site_description: String,

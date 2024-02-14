@@ -5,6 +5,6 @@ import { getConfig, updateConfig } from "../controllers/configController.js"
 const router = express.Router()
 
 router.get("/", getConfig)
-router.patch("/:id", updateConfig)
+router.patch("/", updateConfig)
 
 export default router 

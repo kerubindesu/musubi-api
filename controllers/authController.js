@@ -40,7 +40,6 @@ export const Login = asyncHandler( async(req, res) => {
 export const refreshToken = asyncHandler( async(req, res) => {
     try {
         const refreshToken = req.cookies.refreshToken
-        console.log(refreshToken)
 
         if (!refreshToken) return res.sendStatus(401)
 
