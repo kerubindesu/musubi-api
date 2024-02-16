@@ -1,14 +1,9 @@
-import mongoose from "mongoose";
 import User from "../models/User.js";
 import Post from "../models/Post.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import validator from "email-validator"
-import jwt from "jsonwebtoken";
 
-// @desc get all users
-// @route GET /users
-// @access Private
 export const getUsers = asyncHandler(async (req, res) => {
     const search = req.query.search || "";
     const page = parseInt(req.query.page) || 0;
@@ -49,9 +44,6 @@ export const getUsers = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc create new user
-// @route GET /users
-// @access Private
 export const createUser = asyncHandler(async (req, res) => {
     const { name, username, email, password } = req.body
 
@@ -96,15 +88,12 @@ export const createUser = asyncHandler(async (req, res) => {
 
         if (!user) return res.status(400).json({ message: "Invalid user data recivied" })
 
-        return res.status(200).json({ message:  `${user.name} created successfully` })
+        return res.status(200).json({ message:  `Register user successfully` })
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
 })
 
-// @desc get single user by id
-// @route GET /user/:id
-// @access Private
 export const getUserById = asyncHandler(async (req, res) => {
     const { id } = req.params
 
@@ -117,9 +106,6 @@ export const getUserById = asyncHandler(async (req, res) => {
     }
 })
 
-// @desc update a user
-// @route PATCH /users
-// @access Private
 export const updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params
     const { name, username, email, password } = req.body
@@ -166,9 +152,6 @@ export const updateUser = asyncHandler(async (req, res) => {
     }
 })
 
-// @desc delete a user
-// @route DELETE /users
-// @access Private
 export const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params
 
@@ -183,7 +166,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
     try {
         const user = await User.findOneAndDelete({ _id: id })
 
-        return res.status(200).json({ message: `User with id ${ user._id } deleted`})
+        return res.status(200).json({ message: `User deleted successfully`})
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }

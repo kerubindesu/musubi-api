@@ -1,26 +1,16 @@
-import Post from '../models/Post.js'
-import User from '../models/User.js'
+import Banner from '../models/Banner.js'
 import asyncHandler from 'express-async-handler'
 import path from "path"
 import fs from "fs"
 
-const getPosts = asyncHandler( async(req, res) => {
+const getBanners = asyncHandler( async(req, res) => {
     const search = req.query.search || "";
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 10;
 
     try {
-        const users = await User.find({
+        const banners = await Banner.find({
             $or: [
-                { "name": { $regex: search, $options: "i" } },
-                { "username": { $regex: search, $options: "i" } },
-                { "email": { $regex: search, $options: "i" } },
-            ]
-        }).select("_id")
-
-        const posts = await Post.find({
-            $or: [
-                { user: users },
                 { "title": { $regex: search, $options: "i" } },
                 { "text": { $regex: search, $options: "i" } },
                 { "image": { $regex: search, $options: "i" } },
@@ -30,9 +20,8 @@ const getPosts = asyncHandler( async(req, res) => {
         .sort({ createdAt: "desc" })
         .limit(limit)
 
-        const totalRows = await Post.countDocuments({
+        const totalRows = await Banner.countDocuments({
             $or: [
-                { user: users },
                 { "title": { $regex: search, $options: "i" } },
                 { "text": { $regex: search, $options: "i" } },
                 { "image": { $regex: search, $options: "i" } },
@@ -42,33 +31,31 @@ const getPosts = asyncHandler( async(req, res) => {
         // Menghitung totalPage berdasarkan totalRows dan limit
         const totalPage = Math.ceil(totalRows/limit);
 
-        if (posts.length === 0) {
-            return res.status(200).json({ message: "No found post" });
+        if (banners.length === 0) {
+            return res.status(200).json({ message: "No found banner" });
         }
 
-        return res.status(200).json({ result: posts, page, totalRows, totalPage });
+        return res.status(200).json({ result: banners, page, totalRows, totalPage });
     } catch (error) {
-        console.error("Error fetching posts:", error.message);
+        console.error("Error fetching banners:", error.message);
         res.status(500).json({ message: "Internal server error" });
     }
 })
 
-const getPostById = asyncHandler( async(req, res) => {
+const getBannerById = asyncHandler( async(req, res) => {
     const { id } = req.params
 
     try {
-        const post = await Post.findById(id)
+        const banner = await Banner.findById(id)
 
-        return res.status(200).json(post)
+        return res.status(200).json(banner)
     } catch (error) {
         return res.status(400).json({ message: error.message})
     }
 })
 
-const createPost = asyncHandler( async(req, res) => {
-    const { username, title, text } = req.body
-
-    if (!username) return res.status(403).json({ message: 'Forbidden' })
+const createBanner = asyncHandler( async(req, res) => {
+    const { title, text } = req.body
 
     if (!title) return res.status(403).json({ message: 'Title is required' })
     
@@ -78,8 +65,6 @@ const createPost = asyncHandler( async(req, res) => {
     if (req.files === null) return res.status(400).json({ message: 'No file uploaded' })
 
     try {
-        const user = await User.findOne({username})
-        
         const file = req.files.file
         const fileSize = file.data.length
         const extention = path.extname(file.name)
@@ -98,9 +83,9 @@ const createPost = asyncHandler( async(req, res) => {
             if (error) return res.status(500).json({ message: error.message })
 
             try {
-                await Post.create({ user: user, title, text, image: fileName, img_url: url })
+                await Banner.create({ title, text, image: fileName, img_url: url })
 
-                res.status(201).json({ message: "Post created successfully" })
+                res.status(201).json({ message: "Banner created successfully" })
             } catch (error) {
                 console.log(error.message)
             }
@@ -111,33 +96,33 @@ const createPost = asyncHandler( async(req, res) => {
     
 })
 
-const updatePost = asyncHandler( async(req, res) => {
+const updateBanner = asyncHandler( async(req, res) => {
     const { id } = req.params
 
     const { title, text } = req.body
 
     // Confirm data
-    if (!id) return res.status(400).json({ message: 'Post id required' })
+    if (!id) return res.status(400).json({ message: 'Banner id required' })
 
     if (!title) return res.status(403).json({ message: 'Title is required' })
     
     if (!text) return res.status(403).json({ message: 'Text is required' })
 
-    // Confirm post exists to delete 
-    const post = await Post.findById(id).exec()
+    // Confirm banner exists to delete 
+    const banner = await Banner.findById(id).exec()
 
-    if (!post) return res.status(404).json({ message: 'No data found' })
+    if (!banner) return res.status(404).json({ message: 'No data found' })
 
     let fileName
     if (req.files === null) {
-        fileName = post.image
+        fileName = banner.image
     } else {
         const file = req.files.file
         const fileSize = file.data.length
         const extention = path.extname(file.name)
         const currentDateTime = new Date();
         const timestamp = currentDateTime.toISOString().replace(/[-:]/g, '').replace('T', '').split('.')[0];
-        fileName = file.md5 + timestamp + post.user + extention // convert to md5
+        fileName = file.md5 + timestamp + extention // convert to md5
 
         const allowedType = [".png", ".jpg", ".jpeg"]
         
@@ -145,7 +130,7 @@ const updatePost = asyncHandler( async(req, res) => {
 
         if (fileSize > (1000 * 5000)) return res.status(422).json({ message: "Image must be less than 5MB" })
 
-        const filePath = `./public/images/${post.image}`
+        const filePath = `./public/images/${banner.image}`
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
@@ -158,40 +143,40 @@ const updatePost = asyncHandler( async(req, res) => {
     const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
 
     try {
-        await post.updateOne({ title, text, image: fileName, img_url: url })
+        await banner.updateOne({ title, text, image: fileName, img_url: url })
 
-        return res.status(200).json({ message: "Post updated successfully" })
+        return res.status(200).json({ message: "Banner updated successfully" })
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
 })
 
-const deletePost = asyncHandler( async(req, res) => {
+const deleteBanner = asyncHandler( async(req, res) => {
     const { id } = req.params
 
     // Confirm data
-    if (!id) return res.status(400).json({ message: 'Post id required' })
+    if (!id) return res.status(400).json({ message: 'Banner id required' })
 
-    // Confirm post exists to delete 
-    const post = await Post.findById(id).exec()
+    // Confirm banner exists to delete 
+    const banner = await Banner.findById(id).exec()
 
-    if (!post) return res.status(404).json({ message: 'No data found' })
+    if (!banner) return res.status(404).json({ message: 'No data found' })
 
     try {
-        const filePath = `./public/images/${post.image}`
+        const filePath = `./public/images/${banner.image}`
         fs.unlinkSync(filePath)
 
-        await post.deleteOne()
-        res.status(200).json({ message: "Post deleted successfully"})
+        await banner.deleteOne()
+        res.status(200).json({ message: "Banner deleted successfully"})
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
 })
 
 export {
-    getPosts,
-    getPostById,
-    createPost,
-    updatePost,
-    deletePost
+    getBanners,
+    getBannerById,
+    createBanner,
+    updateBanner,
+    deleteBanner
 }

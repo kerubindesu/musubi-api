@@ -4,7 +4,7 @@ import asyncHandler from "express-async-handler";
 export const getMenus = asyncHandler(async (req, res) => {
     const search = req.query.search || "";
     const page = parseInt(req.query.page) || 0;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 32;
 
     try {
         const menus = await Menu.find({
@@ -16,7 +16,7 @@ export const getMenus = asyncHandler(async (req, res) => {
         })
         .skip(limit * page)
         .select("-createdAt -updatedAt")
-        .sort({ "name": "asc" })
+        .sort({ "createdAt": "asc" })
         .limit(limit)
 
         const totalRows = await Menu.countDocuments({
@@ -108,9 +108,6 @@ export const updateMenu = asyncHandler(async (req, res) => {
     }
 })
 
-// @desc delete a menu
-// @route DELETE /menus
-// @access Private
 export const deleteMenu = asyncHandler(async (req, res) => {
     const { id } = req.params
 

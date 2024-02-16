@@ -4,7 +4,6 @@ import path from "path"
 import fs from "fs"
 
 const getLogo = asyncHandler(async (req, res) => {
-
     try {
         const logo = await Logo.findOne();
         res.json(logo);
@@ -20,7 +19,9 @@ const createLogo = asyncHandler( async(req, res) => {
         const file = req.files.file
         const fileSize = file.data.length
         const extention = path.extname(file.name)
-        const fileName = file.md5 + extention // convert to md5
+        const currentDateTime = new Date();
+        const timestamp = currentDateTime.toISOString().replace(/[-:]/g, '').replace('T', '').split('.')[0];
+        const fileName = file.md5 + timestamp + extention // convert to md5
         const url = `${req.protocol}://${req.get("host")}/logo/${fileName}`
 
         const allowedType = [".png", ".jpg", ".jpeg"]
@@ -36,7 +37,7 @@ const createLogo = asyncHandler( async(req, res) => {
                 await Logo.create({ image: fileName, img_url: url })
 
                 console.log("success")
-                res.status(201).json({ message: "Logo created successfuly" })
+                res.status(201).json({ message: "Logo created successfully" })
             } catch (error) {
                 console.log(error.message)
             }
@@ -62,7 +63,6 @@ const updateLogo =  async(req, res) => {
             const extention = path.extname(file.name)
             const currentDateTime = new Date();
             const timestamp = currentDateTime.toISOString().replace(/[-:]/g, '').replace('T', '').split('.')[0];
-            const date = new Date()
             fileName = file.md5 + timestamp + extention // convert to md5
 
             const allowedType = [".png", ".jpg", ".jpeg"]
@@ -87,7 +87,7 @@ const updateLogo =  async(req, res) => {
         try {
             await Logo.findOneAndUpdate({ image: fileName, img_url: url })
 
-            return res.status(200).json({ message: "Logo updated successfuly" })
+            return res.status(200).json({ message: "Logo updated successfully" })
         } catch (error) {
             return res.status(400).json({ message: error.message })
         }
