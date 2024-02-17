@@ -9,7 +9,7 @@ export const Login = asyncHandler( async(req, res) => {
         
         const match = await bcrypt.compare(req.body.password, user.password)
 
-        if (!match) return res.status(400).json({ message: "Wrong password"})
+        if (!match) return res.status(400).json({ message: "Incorrect username or password."})
 
         const uid = user._id
         const name = user.name
@@ -26,14 +26,14 @@ export const Login = asyncHandler( async(req, res) => {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000,
             secure: true,
-            sameSite: 'None'
+            sameSite: "None"
         })
 
         console.log(accessToken)
 
-        res.status(200).json({ message: "Login successfully" })
+        res.status(200).json({ message: "Login successfully." })
     } catch (error) {
-        res.status(404).json({ message: "Username not found" })
+        res.status(400).json({ message: "Incorrect username or password." })
     }
 })
 

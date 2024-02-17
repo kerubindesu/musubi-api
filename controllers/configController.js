@@ -4,7 +4,6 @@ import path from "path"
 import fs from "fs"
 
 export const getConfig = asyncHandler(async (req, res) => {
-    console.log("get config nih")
     try {
         const config = await Config.findOne();
         res.json(config);
@@ -44,12 +43,10 @@ export const updateConfig = asyncHandler(async (req, res) => {
         const allowedType = [".png", ".jpg", ".jpeg"];
         
         if (!allowedType.includes(extention.toLocaleLowerCase())) {
-            return res.status(422).json({ message: "Invalid images" });
+            return res.status(422).json({ message: "Invalid images." });
         }
 
-        if (fileSize > (1000 * 5000)) {
-            return res.status(422).json({ message: "Image must be less than 5MB" });
-        }
+        if (fileSize > (3200 * 5000)) return res.status(422).json({ message: "Image must be less than 16MB." })
 
         // Hapus file lama jika ada
         const oldFilePath = `./public/logo/${config.image}`;
@@ -87,7 +84,7 @@ export const updateConfig = asyncHandler(async (req, res) => {
             sender_email,
         });
 
-        return res.status(200).json({ message: "Config updated successfully", config: updatedConfig });
+        return res.status(200).json({ message: "Config updated successfully.", config: updatedConfig });
     } catch (error) {
         console.error(error);
         return res.status(400).json({ message: error.message });

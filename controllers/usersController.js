@@ -34,13 +34,13 @@ export const getUsers = asyncHandler(async (req, res) => {
         const totalPage = Math.ceil(totalRows/limit);
 
         if (users.length === 0) {
-            return res.status(200).json({ message: "No found user" });
+            return res.status(200).json({ message: "No found user." });
         }
 
         return res.status(200).json({ result: users, page, totalRows, totalPage });
     } catch (error) {
         console.error("Error fetching users:", error.message);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: "Internal server error." });
     }
 });
 
@@ -49,30 +49,30 @@ export const createUser = asyncHandler(async (req, res) => {
 
     // confirm data
     // validate name
-    if (!name) return res.status(400).json({ message: "Name is required" });
+    if (!name) return res.status(400).json({ message: "Name is required." });
 
     // validate username
-    if (!username) return res.status(400).json({ message: "Username is required" });
+    if (!username) return res.status(400).json({ message: "Username is required." });
 
-    if (username.length < 5) return res.status(400).json({ message: "Username must be at least 5 characters" });
+    if (username.length < 5) return res.status(400).json({ message: "Username must be at least 5 characters." });
 
-    if (!/^[a-zA-Z0-9_-]+$/.test(username)) return res.status(400).json({ message: "Username may only contain letters, numbers, underscores and hypenes" });
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) return res.status(400).json({ message: "Username may only contain letters, numbers, underscores and hypenes." });
 
     const duplicateUsername = await User.findOne({ username })
-    if (duplicateUsername) return res.status(400).json({ message: "Username already exist"})
+    if (duplicateUsername) return res.status(400).json({ message: "Username already exist."})
 
     // validate email
-    if (!email) return res.status(400).json({ message: "Email is required" });
+    if (!email) return res.status(400).json({ message: "Email is required." });
 
     const isValidEmail = validator.validate(email)
-    if (!isValidEmail) return res.status(400).json({ message: "Email is not valid" })
+    if (!isValidEmail) return res.status(400).json({ message: "Email is not valid." })
 
     const duplicateEmail = await User.findOne({ email })
-    if (duplicateEmail) return res.status(400).json({ message: "Email is already exists"})
+    if (duplicateEmail) return res.status(400).json({ message: "Email is already exists."})
 
     // validate password
     if (!password) {
-        return res.status(400).json({ message: "Password is required" });
+        return res.status(400).json({ message: "Password is required." });
     }
 
     // hash password
@@ -86,9 +86,9 @@ export const createUser = asyncHandler(async (req, res) => {
             "password": hashedPassword
         })
 
-        if (!user) return res.status(400).json({ message: "Invalid user data recivied" })
+        if (!user) return res.status(400).json({ message: "Invalid user data recivied." })
 
-        return res.status(200).json({ message:  `Register user successfully` })
+        return res.status(200).json({ message:  `Register user successfully.` })
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
@@ -112,29 +112,29 @@ export const updateUser = asyncHandler(async (req, res) => {
 
     // chek if user found
     const user = await User.findById({_id: id})
-    if (!user) return res.status(400).json({ message: "No user found" })
+    if (!user) return res.status(400).json({ message: "No user found." })
 
     // confirm data
     // Check if username is provided
-    if (!name) return res.status(400).json({ message: "Name is required" });
+    if (!name) return res.status(400).json({ message: "Name is required." });
 
     // Check if username is provided
-    if (!username) return res.status(400).json({ message: "Username is required" });
+    if (!username) return res.status(400).json({ message: "Username is required." });
 
     // Check if username is already exists
     const findByUsername = await User.findOne({ username })
-    if (findByUsername && findByUsername.id !== user.id) return res.status(400).json({ message: "Username is already exists"})
+    if (findByUsername && findByUsername.id !== user.id) return res.status(400).json({ message: "Username is already exists."})
 
     // Check if email is provided
-    if (!email) return res.status(400).json({ message: "Email is required" });
+    if (!email) return res.status(400).json({ message: "Email is required." });
 
     // Check if email is valid
     const isValidEmail = validator.validate(email)
-    if (!isValidEmail) return res.status(400).json({ message: "Email is not valid" })
+    if (!isValidEmail) return res.status(400).json({ message: "Email is not valid." })
 
     // Check if email is already exists
     const findByEmail = await User.findOne({ email })
-    if (findByEmail && findByEmail.id !== user.id) return res.status(400).json({ message: "Email is already exists"})
+    if (findByEmail && findByEmail.id !== user.id) return res.status(400).json({ message: "Email is already exists."})
 
     try {
         user.name = name
@@ -146,7 +146,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 
         await user.save()
         
-        return res.status(200).json({ message: `${user.name} updated successfully` })
+        return res.status(200).json({ message: "User successfully updated." })
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
@@ -155,9 +155,10 @@ export const updateUser = asyncHandler(async (req, res) => {
 export const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params
 
-    if (!id) return res.status(400).json({ message: "User id required" })
+    if (!id) return res.status(400).json({ message: "User id required." })
 
     const posts = await Post.findOne({ user: id }).lean().exec()
+    if (posts) return res.status(400).json({ message: "Can't delete user. Please delete linked posts first." })
 
     const user = await User.findById(id).exec()
 
@@ -166,7 +167,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
     try {
         const user = await User.findOneAndDelete({ _id: id })
 
-        return res.status(200).json({ message: `User deleted successfully`})
+        return res.status(200).json({ message: `User deleted successfully.`})
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
