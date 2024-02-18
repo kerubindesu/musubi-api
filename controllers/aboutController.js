@@ -27,14 +27,14 @@ const getAboutById = asyncHandler( async(req, res) => {
 const createAbout = asyncHandler( async(req, res) => {
     const { title, text, maps } = req.body
 
-    if (!title) return res.status(403).json({ message: "Title is required." })
+    if (!title) return res.status(400).json({ message: "Title is required." })
     
-    if (!text) return res.status(403).json({ message: "Text is required." })
+    if (!text) return res.status(400).json({ message: "Text is required." })
 
 
     if (req.files === null) return res.status(400).json({ message: "No file uploaded." })
 
-    if (!maps) return res.status(403).json({ message: "Maps is required." })
+    if (!maps) return res.status(400).json({ message: "Maps is required." })
 
     try {
         const file = req.files.file
@@ -72,11 +72,11 @@ const updateAbout = asyncHandler( async(req, res) => {
     const { title, text, maps } = req.body
 
     // Confirm data
-    if (!title) return res.status(403).json({ message: "Title is required." })
+    if (!title) return res.status(400).json({ message: "Title is required." })
     
-    if (!text) return res.status(403).json({ message: "Text is required." })
+    if (!text) return res.status(400).json({ message: "Text is required." })
 
-    if (!maps) return res.status(403).json({ message: "Maps is required." })
+    if (!maps) return res.status(400).json({ message: "Maps is required." })
 
     // Confirm about exists to delete 
     const about = await About.findOne({}).exec()

@@ -57,9 +57,9 @@ const getCarouselById = asyncHandler( async(req, res) => {
 const createCarousel = asyncHandler( async(req, res) => {
     const { title, text } = req.body
 
-    if (!title) return res.status(403).json({ message: "Title is required." })
+    if (!title) return res.status(400).json({ message: "Title is required." })
     
-    if (!text) return res.status(403).json({ message: "Text is required." })
+    if (!text) return res.status(400).json({ message: "Text is required." })
 
 
     if (req.files === null) return res.status(400).json({ message: "No file uploaded." })
@@ -104,9 +104,9 @@ const updateCarousel = asyncHandler( async(req, res) => {
     // Confirm data
     if (!id) return res.status(400).json({ message: "Carousel id required." })
 
-    if (!title) return res.status(403).json({ message: "Title is required." })
+    if (!title) return res.status(400).json({ message: "Title is required." })
     
-    if (!text) return res.status(403).json({ message: "Text is required." })
+    if (!text) return res.status(400).json({ message: "Text is required." })
 
     // Confirm carousel exists to delete 
     const carousel = await Carousel.findById(id).exec()

@@ -96,8 +96,8 @@ export const deleteTag = asyncHandler(async (req, res) => {
 
     if (!id) return res.status(400).json({ message: "Tag id required." })
 
-    const posts = await Post.findOne({ tag: id }).lean().exec()
-    if (posts) return res.status(400).json({ message: "Can't delete tag. Please delete linked posts first." })
+    const postsCount = await Post.countDocuments({ tags: id });
+    if (postsCount > 0) return res.status(400).json({ message: "Can't delete tags. Please delete linked posts first." })
 
     const tag = await Tag.findById(id).exec()
 

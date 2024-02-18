@@ -53,7 +53,7 @@ export const createCategory = asyncHandler(async (req, res) => {
     const duplicateName = await Category.findOne({ name })
     if (duplicateName) return res.status(400).json({ message: "Name already exist."})
 
-    if (!text) return res.status(403).json({ message: "Text is required." })
+    if (!text) return res.status(400).json({ message: "Text is required." })
 
     if (req.files === null) return res.status(400).json({ message: "No file uploaded." })
 
@@ -114,7 +114,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
     const findByName = await Category.findOne({ name })
     if (findByName && findByName.id !== category.id) return res.status(400).json({ message: "Name is already exists."})
 
-    if (!text) return res.status(403).json({ message: "Text is required." })
+    if (!text) return res.status(400).json({ message: "Text is required." })
     
     let fileName
     if (req.files === null) {
@@ -159,8 +159,8 @@ export const deleteCategory = asyncHandler(async (req, res) => {
 
     if (!id) return res.status(400).json({ message: "Category id required." })
 
-    const posts = await Post.findOne({ category: id }).lean().exec()
-    if (posts) return res.status(400).json({ message: "Can't delete category. Please delete linked posts first." })
+    const postsCount = await Post.countDocuments({ category: id });
+    if (postsCount > 0) return res.status(400).json({ message: "Can't delete category. Please delete linked posts first." })
 
     const category = await Category.findById(id).exec()
 
@@ -174,3 +174,62 @@ export const deleteCategory = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: error.message })
     }
 })
+
+const getPostsByCategory = asyncHandler(async (req, res) => {
+    const categoryId = req.params.categoryId;
+    const search = req.query.search || "";
+    const page = parseInt(req.query.page) || 0;
+    const limit = parseInt(req.query.limit) || 10;
+
+    try {
+        // Mencari kategori berdasarkan ID
+        const category = await Category.findById(categoryId);
+
+        // Jika kategori tidak ditemukan
+        if (!category) {
+            return res.status(404).json({ message: "Category not found" });
+        }
+
+        const users = await User.find({
+            $or: [
+                { "name": { $regex: search, $options: "i" } },
+                { "username": { $regex: search, $options: "i" } },
+                { "email": { $regex: search, $options: "i" } },
+            ]
+        }).select("_id");
+
+        const query = {
+            $and: [
+                { category: categoryId },
+                {
+                    $or: [
+                        { user: { $in: users } },
+                        { "title": { $regex: search, $options: "i" } },
+                        { "text": { $regex: search, $options: "i" } },
+                        { "image": { $regex: search, $options: "i" } }
+                    ]
+                }
+            ]
+        };
+
+        const posts = await Post.find(query)
+            .populate("author", "-_id -password")
+            .populate("category", "-_id -createdAt -updatedAt")
+            .populate("tags", "-_id -createdAt -updatedAt")
+            .skip(limit * page)
+            .sort({ createdAt: "desc" })
+            .limit(limit);
+
+        const totalRows = await Post.countDocuments(query);
+        const totalPage = Math.ceil(totalRows / limit);
+
+        if (posts.length === 0) {
+            return res.status(200).json({ message: "No found post in this category." });
+        }
+
+        return res.status(200).json({ result: posts, page, totalRows, totalPage });
+    } catch (error) {
+        console.error("Error fetching posts by category:", error.message);
+        res.status(500).json({ message: "Internal server error." });
+    }
+});

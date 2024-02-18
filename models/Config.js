@@ -32,4 +32,4 @@ const configSchema = new mongoose.Schema({
     sender_email: String
 });
 
-export default mongoose.model('Config', configSchema);
+export default mongoose.model("Config", configSchema);

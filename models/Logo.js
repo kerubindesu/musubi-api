@@ -14,4 +14,4 @@ const logoSchema = new mongoose.Schema({
     timestamps: true
 })
 
-export default mongoose.model('Logo', logoSchema);
+export default mongoose.model("Logo", logoSchema);

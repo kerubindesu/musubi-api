@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import Post from "./Post.js";
 
 const categorySchema = new mongoose.Schema({
     name: {
@@ -17,10 +18,14 @@ const categorySchema = new mongoose.Schema({
     img_url: {
         type: String,
         required: true
-    }
+    },
+    posts: [{ 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post" 
+    }]
 },
 {
     timestamps: true
 })
 
-export default mongoose.model('Category', categorySchema);
+export default mongoose.model("Category", categorySchema);
