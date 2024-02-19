@@ -79,7 +79,7 @@ const updateAbout = asyncHandler( async(req, res) => {
     if (!maps) return res.status(400).json({ message: "Maps is required." })
 
     // Confirm about exists to delete 
-    const about = await About.findOne({}).exec()
+    const about = await About.findOne({})
 
     if (!about) return res.status(404).json({ message: "No data found." })
 
@@ -123,7 +123,7 @@ const updateAbout = asyncHandler( async(req, res) => {
 
 const deleteAbout = asyncHandler( async(req, res) => {
     
-    const about = await About.findOne({}).exec()
+    const about = await About.findOne({})
 
     if (!about) return res.status(404).json({ message: "No data found." })
 

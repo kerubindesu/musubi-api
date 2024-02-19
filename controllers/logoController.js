@@ -50,7 +50,7 @@ const createLogo = asyncHandler( async(req, res) => {
 
 const updateLogo =  async(req, res) => {
     try {
-        const logo = await Logo.findOne({}).exec()
+        const logo = await Logo.findOne({})
 
         if (!logo) return res.status(404).json({ message: "No data found." })
 

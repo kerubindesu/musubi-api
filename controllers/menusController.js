@@ -113,7 +113,7 @@ export const deleteMenu = asyncHandler(async (req, res) => {
 
     if (!id) return res.status(400).json({ message: "Menu id required." })
 
-    const menu = await Menu.findById(id).exec()
+    const menu = await Menu.findById(id)
 
     if (!menu) return res.status(404).json({ message: "Menu not found."})
 

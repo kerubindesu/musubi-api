@@ -76,6 +76,9 @@ const createPost = asyncHandler( async(req, res) => {
     if (!title) return res.status(400).json({ message: "Title is required." })
     if (!text) return res.status(400).json({ message: "Text is required." })
     if (!username) return res.status(403).json({ message: "Forbidden." })
+
+    if (req.files === null) return res.status(400).json({ message: "No file uploaded." })
+
     if (!category) return res.status(400).json({ message: "Category is required." })
 
     if (category) {
@@ -87,8 +90,6 @@ const createPost = asyncHandler( async(req, res) => {
             return res.status(400).json({ message: error.message})
         }
     }
-
-    if (req.files === null) return res.status(400).json({ message: "No file uploaded." })
 
     try {
         const user = await User.findOne({username})
@@ -175,7 +176,7 @@ const updatePost = asyncHandler( async(req, res) => {
         }
     }
 
-    const post = await Post.findById(id).exec()
+    const post = await Post.findById(id)
     if (!post) return res.status(404).json({ message: "No data found." })
 
     let fileName
@@ -276,7 +277,7 @@ const deletePost = asyncHandler( async(req, res) => {
 
     if (!id) return res.status(400).json({ message: "Post id required." })
 
-    const post = await Post.findById(id).exec()
+    const post = await Post.findById(id)
     if (!post) return res.status(404).json({ message: "No data found." })
 
     // Menghapus referensi dari kategori jika ada

@@ -162,7 +162,7 @@ export const deleteCategory = asyncHandler(async (req, res) => {
     const postsCount = await Post.countDocuments({ category: id });
     if (postsCount > 0) return res.status(400).json({ message: "Can't delete category. Please delete linked posts first." })
 
-    const category = await Category.findById(id).exec()
+    const category = await Category.findById(id)
 
     if (!category) return res.status(400).json({ message: "Category not found."})
 

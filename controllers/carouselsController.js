@@ -109,7 +109,7 @@ const updateCarousel = asyncHandler( async(req, res) => {
     if (!text) return res.status(400).json({ message: "Text is required." })
 
     // Confirm carousel exists to delete 
-    const carousel = await Carousel.findById(id).exec()
+    const carousel = await Carousel.findById(id)
 
     if (!carousel) return res.status(404).json({ message: "No data found." })
 
@@ -158,7 +158,7 @@ const deleteCarousel = asyncHandler( async(req, res) => {
     if (!id) return res.status(400).json({ message: "Carousel id required." })
 
     // Confirm carousel exists to delete 
-    const carousel = await Carousel.findById(id).exec()
+    const carousel = await Carousel.findById(id)
 
     if (!carousel) return res.status(404).json({ message: "No data found." })
 

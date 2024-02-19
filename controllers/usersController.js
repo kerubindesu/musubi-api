@@ -157,10 +157,10 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
     if (!id) return res.status(400).json({ message: "User id required." })
 
-    const posts = await Post.findOne({ user: id }).lean().exec()
+    const posts = await Post.findOne({ user: id })
     if (posts) return res.status(400).json({ message: "Can't delete user. Please delete linked posts first." })
 
-    const user = await User.findById(id).exec()
+    const user = await User.findById(id)
 
     if (!user) return res.status(400).json({ message: "User not found"})
 
