@@ -3,6 +3,8 @@ import asyncHandler from "express-async-handler";
 import Post from "../models/Post.js";
 import path from "path"
 import fs from "fs"
+import User from "../models/User.js";
+import Tag from "../models/Tag.js";
 
 export const getCategories = asyncHandler(async (req, res) => {
     const search = req.query.search || "";
@@ -175,15 +177,15 @@ export const deleteCategory = asyncHandler(async (req, res) => {
     }
 })
 
-const getPostsByCategory = asyncHandler(async (req, res) => {
-    const categoryId = req.params.categoryId;
+export const getPostsByCategory = asyncHandler(async (req, res) => {
+    const { id } = req.params
     const search = req.query.search || "";
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 10;
 
     try {
         // Mencari kategori berdasarkan ID
-        const category = await Category.findById(categoryId);
+        const category = await Category.findById(id);
 
         // Jika kategori tidak ditemukan
         if (!category) {
@@ -198,12 +200,19 @@ const getPostsByCategory = asyncHandler(async (req, res) => {
             ]
         }).select("_id");
 
+        const tags = await Tag.find({
+            $or: [
+                { "name": { $regex: search, $options: "i" } },
+            ]
+        }).select("_id");
+
         const query = {
             $and: [
-                { category: categoryId },
+                { category: id },
                 {
                     $or: [
                         { user: { $in: users } },
+                        { tags: { $in: tags } },
                         { "title": { $regex: search, $options: "i" } },
                         { "text": { $regex: search, $options: "i" } },
                         { "image": { $regex: search, $options: "i" } }
