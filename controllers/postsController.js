@@ -188,7 +188,7 @@ const updatePost = asyncHandler( async(req, res) => {
         const extention = path.extname(file.name)
         const currentDateTime = new Date();
         const timestamp = currentDateTime.toISOString().replace(/[-:]/g, "").replace("T", "").split(".")[0];
-        fileName = file.md5 + timestamp + post.user + extention // convert to md5
+        fileName = file.md5 + timestamp + post.author + extention // convert to md5
 
         const allowedType = [".png", ".jpg", ".jpeg"]
         
