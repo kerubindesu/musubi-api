@@ -40,7 +40,7 @@ export const updateConfig = asyncHandler(async (req, res) => {
         const extention = path.extname(file.name);
         fileName = file.md5 + extention; // convert to md5
 
-        const allowedType = [".png", ".jpg", ".jpeg"];
+        const allowedType = [".png", ".jpg", ".jpeg", ".webp"];
         
         if (!allowedType.includes(extention.toLocaleLowerCase())) {
             return res.status(422).json({ message: "Invalid images." });

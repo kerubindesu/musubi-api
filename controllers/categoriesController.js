@@ -1,6 +1,6 @@
 import Category from "../models/Category.js";
 import asyncHandler from "express-async-handler";
-import Post from "../models/Post.js";
+import Product from "../models/Product.js";
 import path from "path"
 import fs from "fs"
 import User from "../models/User.js";
@@ -15,7 +15,7 @@ export const getCategories = asyncHandler(async (req, res) => {
         const categories = await Category.find({
             $or: [
                 { "name": { $regex: search, $options: "i" } },
-                { "text": { $regex: search, $options: "i" } },
+                { "description": { $regex: search, $options: "i" } },
                 { "image": { $regex: search, $options: "i" } }
             ]
         })
@@ -27,7 +27,7 @@ export const getCategories = asyncHandler(async (req, res) => {
         const totalRows = await Category.countDocuments({
             $or: [
                 { "name": { $regex: search, $options: "i" } },
-                { "text": { $regex: search, $options: "i" } },
+                { "description": { $regex: search, $options: "i" } },
                 { "image": { $regex: search, $options: "i" } }
             ]
         })
@@ -48,14 +48,14 @@ export const getCategories = asyncHandler(async (req, res) => {
 
 export const createCategory = asyncHandler(async (req, res) => {
     const name = req.body.name.charAt(0).toUpperCase() + req.body.name.slice(1);
-    const { text } = req.body;
+    const { description } = req.body;
 
     if (!name) return res.status(400).json({ message: "Name is required." });
 
     const duplicateName = await Category.findOne({ name })
     if (duplicateName) return res.status(400).json({ message: "Name already exist."})
 
-    if (!text) return res.status(400).json({ message: "Text is required." })
+    if (!description) return res.status(400).json({ message: "Description is required." })
 
     if (req.files === null) return res.status(400).json({ message: "No file uploaded." })
 
@@ -68,7 +68,7 @@ export const createCategory = asyncHandler(async (req, res) => {
         const fileName = file.md5 + timestamp + extention // convert to md5
         const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
 
-        const allowedType = [".png", ".jpg", ".jpeg"]
+        const allowedType = [".png", ".jpg", ".jpeg", ".webp"]
 
         if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images." })
 
@@ -78,7 +78,7 @@ export const createCategory = asyncHandler(async (req, res) => {
             if (error) return res.status(500).json({ message: error.message })
 
             try {
-                await Category.create({ name, text, image: fileName, img_url: url })
+                await Category.create({ name, description, image: fileName, img_url: url })
 
                 res.status(201).json({ message: "Category created successfully." })
             } catch (error) {
@@ -105,7 +105,7 @@ export const getCategoryById = asyncHandler(async (req, res) => {
 export const updateCategory = asyncHandler(async (req, res) => {
     const { id } = req.params
     const name = req.body.name.charAt(0).toUpperCase() + req.body.name.slice(1);
-    const { text } = req.body
+    const { description } = req.body
 
     const category = await Category.findById({_id: id})
     if (!category) return res.status(400).json({ message: "No category found." })
@@ -116,7 +116,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
     const findByName = await Category.findOne({ name })
     if (findByName && findByName.id !== category.id) return res.status(400).json({ message: "Name is already exists."})
 
-    if (!text) return res.status(400).json({ message: "Text is required." })
+    if (!description) return res.status(400).json({ message: "Description is required." })
     
     let fileName
     if (req.files === null) {
@@ -129,7 +129,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
         const timestamp = currentDateTime.toISOString().replace(/[-:]/g, "").replace("T", "").split(".")[0];
         fileName = file.md5 + timestamp + extention // convert to md5
 
-        const allowedType = [".png", ".jpg", ".jpeg"]
+        const allowedType = [".png", ".jpg", ".jpeg", ".webp"]
         
         if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images." })
 
@@ -148,7 +148,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
     const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
 
     try {
-        await category.updateOne({ name, text, image: fileName, img_url: url })
+        await category.updateOne({ name, description, image: fileName, img_url: url })
 
         return res.status(200).json({ message: "Category updated successfully." })
     } catch (error) {
@@ -159,10 +159,10 @@ export const updateCategory = asyncHandler(async (req, res) => {
 export const deleteCategory = asyncHandler(async (req, res) => {
     const { id } = req.params
 
-    if (!id) return res.status(400).json({ message: "Category id required." })
+    if (!id) return res.status(400).json({ message: "Category id is required." })
 
-    const postsCount = await Post.countDocuments({ category: id });
-    if (postsCount > 0) return res.status(400).json({ message: "Can't delete category. Please delete linked posts first." })
+    const productsCount = await Product.countDocuments({ category: id });
+    if (productsCount > 0) return res.status(400).json({ message: "Can't delete category. Please delete linked products first." })
 
     const category = await Category.findById(id)
 
@@ -177,11 +177,11 @@ export const deleteCategory = asyncHandler(async (req, res) => {
     }
 })
 
-export const getPostsByCategory = asyncHandler(async (req, res) => {
+export const getProductsByCategory = asyncHandler(async (req, res) => {
     const { id } = req.params
     const search = req.query.search || "";
     const page = parseInt(req.query.page) || 0;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 6;
 
     try {
         // Mencari kategori berdasarkan ID
@@ -214,14 +214,14 @@ export const getPostsByCategory = asyncHandler(async (req, res) => {
                         { user: { $in: users } },
                         { tags: { $in: tags } },
                         { "title": { $regex: search, $options: "i" } },
-                        { "text": { $regex: search, $options: "i" } },
+                        { "description": { $regex: search, $options: "i" } },
                         { "image": { $regex: search, $options: "i" } }
                     ]
                 }
             ]
         };
 
-        const posts = await Post.find(query)
+        const products = await Product.find(query)
             .populate("author", "-_id -password")
             .populate("category", "-_id -createdAt -updatedAt")
             .populate("tags", "-_id -createdAt -updatedAt")
@@ -229,16 +229,16 @@ export const getPostsByCategory = asyncHandler(async (req, res) => {
             .sort({ createdAt: "desc" })
             .limit(limit);
 
-        const totalRows = await Post.countDocuments(query);
+        const totalRows = await Product.countDocuments(query);
         const totalPage = Math.ceil(totalRows / limit);
 
-        if (posts.length === 0) {
-            return res.status(200).json({ message: "No found post in this category." });
+        if (products.length === 0) {
+            return res.status(200).json({ message: "No found product in this category." });
         }
 
-        return res.status(200).json({ result: posts, page, totalRows, totalPage });
+        return res.status(200).json({ result: products, page, totalRows, totalPage });
     } catch (error) {
-        console.error("Error fetching posts by category:", error.message);
+        console.error("Error fetching products by category:", error.message);
         res.status(500).json({ message: "Internal server error." });
     }
 });

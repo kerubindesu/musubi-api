@@ -1,5 +1,4 @@
 import mongoose from "mongoose"
-import Post from "./Post.js";
 
 const categorySchema = new mongoose.Schema({
     name: {
@@ -7,7 +6,7 @@ const categorySchema = new mongoose.Schema({
         unique: true,
         required: true
     },
-    text: {
+    description: {
         type: String,
         required: true
     },
@@ -19,9 +18,9 @@ const categorySchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    posts: [{ 
+    products: [{ 
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Post" 
+        ref: "Product" 
     }]
 },
 {

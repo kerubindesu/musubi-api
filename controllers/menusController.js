@@ -111,7 +111,7 @@ export const updateMenu = asyncHandler(async (req, res) => {
 export const deleteMenu = asyncHandler(async (req, res) => {
     const { id } = req.params
 
-    if (!id) return res.status(400).json({ message: "Menu id required." })
+    if (!id) return res.status(400).json({ message: "Menu id is required." })
 
     const menu = await Menu.findById(id)
 

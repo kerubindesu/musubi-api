@@ -1,5 +1,5 @@
 import User from "../models/User.js";
-import Post from "../models/Post.js";
+import Product from "../models/Product.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import validator from "email-validator"
@@ -155,10 +155,10 @@ export const updateUser = asyncHandler(async (req, res) => {
 export const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params
 
-    if (!id) return res.status(400).json({ message: "User id required." })
+    if (!id) return res.status(400).json({ message: "User id is required." })
 
-    const posts = await Post.findOne({ user: id })
-    if (posts) return res.status(400).json({ message: "Can't delete user. Please delete linked posts first." })
+    const products = await Product.findOne({ user: id })
+    if (products) return res.status(400).json({ message: "Can't delete user. Please delete linked products first." })
 
     const user = await User.findById(id)
 

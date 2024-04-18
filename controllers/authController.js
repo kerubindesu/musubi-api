@@ -29,8 +29,6 @@ export const Login = asyncHandler( async(req, res) => {
             sameSite: "None"
         })
 
-        console.log(accessToken)
-
         res.status(200).json({ message: "Login successfully." })
     } catch (error) {
         res.status(400).json({ message: "Incorrect username or password." })
@@ -58,12 +56,12 @@ export const refreshToken = asyncHandler( async(req, res) => {
             const username = user.username
             const email = user.email
 
-            const accessToken = jwt.sign({ uid, name, username, email}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "20s"})
+            const accessToken = jwt.sign({ uid, name, username, email}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "16m"})
 
             res.json({ accessToken })
         })
     } catch (error) {
-        console.log(error)
+        return Promise.reject(error);
     }
 })
 
@@ -94,6 +92,7 @@ export const getUserAuth = asyncHandler( async(req, res) => {
     
             return res.status(200).json({user})
         } else {
+            console.log("duh error")
             return res.sendStatus(204)
         }
     } catch (error) {

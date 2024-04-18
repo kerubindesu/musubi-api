@@ -24,7 +24,7 @@ const createLogo = asyncHandler( async(req, res) => {
         const fileName = file.md5 + timestamp + extention // convert to md5
         const url = `${req.protocol}://${req.get("host")}/logo/${fileName}`
 
-        const allowedType = [".png", ".jpg", ".jpeg"]
+        const allowedType = [".png", ".jpg", ".jpeg", ".webp"]
 
         if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images." })
 
@@ -65,7 +65,7 @@ const updateLogo =  async(req, res) => {
             const timestamp = currentDateTime.toISOString().replace(/[-:]/g, "").replace("T", "").split(".")[0];
             fileName = file.md5 + timestamp + extention // convert to md5
 
-            const allowedType = [".png", ".jpg", ".jpeg"]
+            const allowedType = [".png", ".jpg", ".jpeg", ".webp"]
             
             if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images." })
 

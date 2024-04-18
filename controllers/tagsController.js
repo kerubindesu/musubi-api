@@ -1,5 +1,5 @@
 import Tag from "../models/Tag.js";
-import Post from "../models/Post.js";
+import Product from "../models/Product.js";
 import asyncHandler from "express-async-handler";
 
 export const getTags = asyncHandler(async (req, res) => {
@@ -94,10 +94,10 @@ export const updateTag = asyncHandler(async (req, res) => {
 export const deleteTag = asyncHandler(async (req, res) => {
     const { id } = req.params
 
-    if (!id) return res.status(400).json({ message: "Tag id required." })
+    if (!id) return res.status(400).json({ message: "Tag id is required." })
 
-    const postsCount = await Post.countDocuments({ tags: id });
-    if (postsCount > 0) return res.status(400).json({ message: "Can't delete tags. Please delete linked posts first." })
+    const productsCount = await Product.countDocuments({ tags: id });
+    if (productsCount > 0) return res.status(400).json({ message: "Can't delete tags. Please delete linked products first." })
 
     const tag = await Tag.findById(id)
 

@@ -11,14 +11,15 @@ import corsOptions from "./config/corsOptions.js";
 import mongoose from "mongoose";
 import authRoutes from "./routes/auth.js"
 import userRoutes from "./routes/user.js"
-import postRoutes from "./routes/post.js"
+import productRoutes from "./routes/product.js"
 import configRoute from "./routes/config.js"
 import logoRoute from "./routes/logo.js"
 import menuRoute from "./routes/menu.js"
 import carouselRoute from "./routes/carousel.js"
-import aboutRoute from "./routes/about.js"
+import contactRoute from "./routes/contact.js"
 import categoryRoute from "./routes/category.js"
 import tagRoute from "./routes/tag.js"
+import seoDataRoute from "./routes/seoData.js"
 import fileUpload from "express-fileupload";
 
 dotenv.config(); // konfigurasi dotenv
@@ -44,14 +45,15 @@ app.use('/', express.static(join(__dirname, '/public')));
 app.use('/', root)
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
-app.use('/posts', postRoutes)
+app.use('/products', productRoutes)
 app.use('/config', configRoute)
 app.use('/logo', logoRoute)
 app.use('/menus', menuRoute)
 app.use('/categories', categoryRoute)
 app.use('/carousels', carouselRoute)
 app.use('/tags', tagRoute)
-app.use('/about', aboutRoute)
+app.use('/contact', contactRoute)
+app.use('/seo-management', seoDataRoute)
 
 app.all('*', (req, res) => {
     res.status(404)

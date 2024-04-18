@@ -12,7 +12,7 @@ const getCarousels = asyncHandler( async(req, res) => {
         const carousels = await Carousel.find({
             $or: [
                 { "title": { $regex: search, $options: "i" } },
-                { "text": { $regex: search, $options: "i" } },
+                { "description": { $regex: search, $options: "i" } },
                 { "image": { $regex: search, $options: "i" } },
             ]
         })
@@ -23,7 +23,7 @@ const getCarousels = asyncHandler( async(req, res) => {
         const totalRows = await Carousel.countDocuments({
             $or: [
                 { "title": { $regex: search, $options: "i" } },
-                { "text": { $regex: search, $options: "i" } },
+                { "description": { $regex: search, $options: "i" } },
                 { "image": { $regex: search, $options: "i" } },
             ]
         })
@@ -55,11 +55,11 @@ const getCarouselById = asyncHandler( async(req, res) => {
 })
 
 const createCarousel = asyncHandler( async(req, res) => {
-    const { title, text } = req.body
+    const { title, description } = req.body
 
     if (!title) return res.status(400).json({ message: "Title is required." })
     
-    if (!text) return res.status(400).json({ message: "Text is required." })
+    if (!description) return res.status(400).json({ message: "Description is required." })
 
 
     if (req.files === null) return res.status(400).json({ message: "No file uploaded." })
@@ -73,7 +73,7 @@ const createCarousel = asyncHandler( async(req, res) => {
         const fileName = file.md5 + timestamp + extention // convert to md5
         const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
 
-        const allowedType = [".png", ".jpg", ".jpeg"]
+        const allowedType = [".png", ".jpg", ".jpeg", ".webp"]
 
         if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images." })
 
@@ -83,7 +83,7 @@ const createCarousel = asyncHandler( async(req, res) => {
             if (error) return res.status(500).json({ message: error.message })
 
             try {
-                await Carousel.create({ title, text, image: fileName, img_url: url })
+                await Carousel.create({ title, description, image: fileName, img_url: url })
 
                 res.status(201).json({ message: "Carousel created successfully." })
             } catch (error) {
@@ -99,14 +99,14 @@ const createCarousel = asyncHandler( async(req, res) => {
 const updateCarousel = asyncHandler( async(req, res) => {
     const { id } = req.params
 
-    const { title, text } = req.body
+    const { title, description } = req.body
 
     // Confirm data
-    if (!id) return res.status(400).json({ message: "Carousel id required." })
+    if (!id) return res.status(400).json({ message: "Carousel id is required." })
 
     if (!title) return res.status(400).json({ message: "Title is required." })
     
-    if (!text) return res.status(400).json({ message: "Text is required." })
+    if (!description) return res.status(400).json({ message: "Description is required." })
 
     // Confirm carousel exists to delete 
     const carousel = await Carousel.findById(id)
@@ -124,7 +124,7 @@ const updateCarousel = asyncHandler( async(req, res) => {
         const timestamp = currentDateTime.toISOString().replace(/[-:]/g, "").replace("T", "").split(".")[0];
         fileName = file.md5 + timestamp + extention // convert to md5
 
-        const allowedType = [".png", ".jpg", ".jpeg"]
+        const allowedType = [".png", ".jpg", ".jpeg", ".webp"]
         
         if (!allowedType.includes(extention.toLocaleLowerCase())) return res.status(422).json({ message: "Invalid images." })
 
@@ -143,7 +143,7 @@ const updateCarousel = asyncHandler( async(req, res) => {
     const url = `${req.protocol}://${req.get("host")}/images/${fileName}`
 
     try {
-        await carousel.updateOne({ title, text, image: fileName, img_url: url })
+        await carousel.updateOne({ title, description, image: fileName, img_url: url })
 
         return res.status(200).json({ message: "Carousel updated successfully." })
     } catch (error) {
@@ -155,7 +155,7 @@ const deleteCarousel = asyncHandler( async(req, res) => {
     const { id } = req.params
 
     // Confirm data
-    if (!id) return res.status(400).json({ message: "Carousel id required." })
+    if (!id) return res.status(400).json({ message: "Carousel id is required." })
 
     // Confirm carousel exists to delete 
     const carousel = await Carousel.findById(id)
