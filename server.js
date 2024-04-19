@@ -9,17 +9,19 @@ import cookieParser from "cookie-parser";
 import cors from "cors"
 import corsOptions from "./config/corsOptions.js";
 import mongoose from "mongoose";
+import { recordVisit } from "./middleware/recordVisit.js";
 import authRoutes from "./routes/auth.js"
 import userRoutes from "./routes/user.js"
 import productRoutes from "./routes/product.js"
-import configRoute from "./routes/config.js"
-import logoRoute from "./routes/logo.js"
-import menuRoute from "./routes/menu.js"
-import carouselRoute from "./routes/carousel.js"
-import contactRoute from "./routes/contact.js"
-import categoryRoute from "./routes/category.js"
-import tagRoute from "./routes/tag.js"
-import seoDataRoute from "./routes/seoData.js"
+import configRoutes from "./routes/config.js"
+import logoRoutes from "./routes/logo.js"
+import menuRoutes from "./routes/menu.js"
+import carouselRoutes from "./routes/carousel.js"
+import contactRoutes from "./routes/contact.js"
+import categoryRoutes from "./routes/category.js"
+import tagRoutes from "./routes/tag.js"
+import seoDataRoutes from "./routes/seoData.js"
+import visitorRoutes from "./routes/visitor.js"
 import fileUpload from "express-fileupload";
 
 dotenv.config(); // konfigurasi dotenv
@@ -41,19 +43,22 @@ app.use(express.json())
 
 app.use(fileUpload())
 
+app.use(recordVisit)
+
 app.use('/', express.static(join(__dirname, '/public')));
 app.use('/', root)
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
 app.use('/products', productRoutes)
-app.use('/config', configRoute)
-app.use('/logo', logoRoute)
-app.use('/menus', menuRoute)
-app.use('/categories', categoryRoute)
-app.use('/carousels', carouselRoute)
-app.use('/tags', tagRoute)
-app.use('/contact', contactRoute)
-app.use('/seo-management', seoDataRoute)
+app.use('/config', configRoutes)
+app.use('/logo', logoRoutes)
+app.use('/menus', menuRoutes)
+app.use('/categories', categoryRoutes)
+app.use('/carousels', carouselRoutes)
+app.use('/tags', tagRoutes)
+app.use('/contact', contactRoutes)
+app.use('/seo-management', seoDataRoutes)
+app.use('/visitors', visitorRoutes)
 
 app.all('*', (req, res) => {
     res.status(404)

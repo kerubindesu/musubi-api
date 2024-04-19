@@ -18,10 +18,8 @@ export const verifyToken = async (req, res, next) => {
         });
         
         req.username = decoded.username;
-        console.log('Token verified successfully:', decoded.username);
         next();
     } catch (error) {
-        console.error('Token verification failed:', error.message);
         return res.sendStatus(403);
     }
 }
