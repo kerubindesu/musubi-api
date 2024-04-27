@@ -3,6 +3,8 @@ import Product from "../models/Product.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import validator from "email-validator"
+import jwt from "jsonwebtoken";
+import { sendEmail } from "../config/mailer.js";
 
 export const getUsers = asyncHandler(async (req, res) => {
     const search = req.query.search || "";
@@ -70,27 +72,34 @@ export const createUser = asyncHandler(async (req, res) => {
     const duplicateEmail = await User.findOne({ email })
     if (duplicateEmail) return res.status(400).json({ message: "Email is already exists."})
 
+    const emailToken = jwt.sign({ email }, process.env.JWT_EMAIL_SECRET, { expiresIn: '1d' });
+
     // validate password
     if (!password) {
         return res.status(400).json({ message: "Password is required." });
     }
 
-    // hash password
-    const hashedPassword = await bcrypt.hash(password, 10) // salt rounds
-
     try {
+        console.log("user")
+
         const user = await User.create({ 
             name,
             username, 
             email,
-            "password": hashedPassword
+            "password": password,
+            emailToken
         })
 
         if (!user) return res.status(400).json({ message: "Invalid user data recivied." })
 
-        return res.status(200).json({ message:  `Register user successfully.` })
+        const url = `http://localhost:3000/auth/verify-email?token=${emailToken}`;
+
+        await sendEmail(email, emailToken);
+
+        res.status(201).json({ message: "User registered, please verify your email." });
     } catch (error) {
-        return res.status(400).json({ message: error.message })
+        console.error('Error creating user: ', error);
+        res.status(500).json({ message: 'Failed to register user' });
     }
 })
 
@@ -140,10 +149,7 @@ export const updateUser = asyncHandler(async (req, res) => {
         user.name = name
         user.username = username
         user.email = email
-        
-        // hash password
-        if (password) user.password = await bcrypt.hash(password, 10) // salt rounds
-
+        if (password) user.password = password
         await user.save()
         
         return res.status(200).json({ message: "User successfully updated." })

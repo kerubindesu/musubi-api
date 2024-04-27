@@ -13,19 +13,19 @@ const getProducts = asyncHandler( async(req, res) => {
     const limit = parseInt(req.query.limit) || 10;
 
     try {
-        const users = await User.find({
-            $or: [
-                { "name": { $regex: search, $options: "i" } },
-                { "username": { $regex: search, $options: "i" } },
-                { "email": { $regex: search, $options: "i" } },
-            ]
-        }).select("_id")
+        // const users = await User.find({
+        //     $or: [
+        //         { "name": { $regex: search, $options: "i" } },
+        //         { "username": { $regex: search, $options: "i" } },
+        //         { "email": { $regex: search, $options: "i" } },
+        //     ]
+        // }).select("_id")
 
         const categories = await Category.find({
             $or: [
                 { "name": { $regex: search, $options: "i" } },
-                { "description": { $regex: search, $options: "i" } },
-                { "image": { $regex: search, $options: "i" } },
+                // { "description": { $regex: search, $options: "i" } },
+                // { "image": { $regex: search, $options: "i" } },
             ]
         }).select("_id")
 
@@ -37,12 +37,12 @@ const getProducts = asyncHandler( async(req, res) => {
 
         const query = {
             $or: [
-                { user: { $in: users } },
+                // { user: { $in: users } },
                 { category: { $in: categories } },
                 { tags: { $in: tags } },
                 { "title": { $regex: search, $options: "i" } },
-                { "description": { $regex: search, $options: "i" } },
-                { "image": { $regex: search, $options: "i" } }
+                // { "description": { $regex: search, $options: "i" } },
+                // { "image": { $regex: search, $options: "i" } }
             ]
         };
 

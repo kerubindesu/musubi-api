@@ -11,4 +11,4 @@ router.get("/:id", getProductById)
 router.patch("/:id", verifyToken, updateProduct)
 router.delete("/:id", verifyToken, deleteProduct)
 
-export default router 
+export default router

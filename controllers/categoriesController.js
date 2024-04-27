@@ -192,13 +192,13 @@ export const getProductsByCategory = asyncHandler(async (req, res) => {
             return res.status(404).json({ message: "Category not found" });
         }
 
-        const users = await User.find({
-            $or: [
-                { "name": { $regex: search, $options: "i" } },
-                { "username": { $regex: search, $options: "i" } },
-                { "email": { $regex: search, $options: "i" } },
-            ]
-        }).select("_id");
+        // const users = await User.find({
+        //     $or: [
+        //         { "name": { $regex: search, $options: "i" } },
+        //         { "username": { $regex: search, $options: "i" } },
+        //         { "email": { $regex: search, $options: "i" } },
+        //     ]
+        // }).select("_id");
 
         const tags = await Tag.find({
             $or: [
@@ -211,11 +211,11 @@ export const getProductsByCategory = asyncHandler(async (req, res) => {
                 { category: id },
                 {
                     $or: [
-                        { user: { $in: users } },
+                        // { user: { $in: users } },
                         { tags: { $in: tags } },
                         { "title": { $regex: search, $options: "i" } },
-                        { "description": { $regex: search, $options: "i" } },
-                        { "image": { $regex: search, $options: "i" } }
+                        // { "description": { $regex: search, $options: "i" } },
+                        // { "image": { $regex: search, $options: "i" } }
                     ]
                 }
             ]
