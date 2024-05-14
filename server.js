@@ -26,8 +26,6 @@ import fileUpload from "express-fileupload";
 
 dotenv.config(); // konfigurasi dotenv
 
-console.log(process.env.NODE_ENV)
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const app = express()
