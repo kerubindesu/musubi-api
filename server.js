@@ -1,3 +1,4 @@
+import dotenv from "dotenv"
 import express from "express";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -23,9 +24,12 @@ import seoDataRoutes from "./routes/seoData.js"
 import visitorRoutes from "./routes/visitor.js"
 import fileUpload from "express-fileupload";
 
+dotenv.config(); // konfigurasi dotenv
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const app = express()
+const PORT = process.env.PORT || 3500
 
 app.use(logger)
 
@@ -69,11 +73,11 @@ app.all('*', (req, res) => {
 app.use(errorHandler)
 
 try {
-    await mongoose.connect("mongodb+srv://kerubindesu:tWgtTy4ZbM074S8o@cluster0.vltgt6s.mongodb.net/musubi?retryWrites=true&w=majority")
+    await mongoose.connect(process.env.MONGO_URI)
     console.log('sucessfuly connect to database')
 
-    app.listen(() => {
-        console.log(`listening for request on production`)
+    app.listen(PORT, () => {
+        console.log(`listening for request on port ${PORT}`)
     })
 } catch (error) {
     console.log(error)
