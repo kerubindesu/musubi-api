@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import validator from "email-validator"
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../config/mailer.js";
+import validatePassword from "../utils/passwordValidator.js";
 
 export const getUsers = asyncHandler(async (req, res) => {
     const search = req.query.search || "";
@@ -20,7 +21,7 @@ export const getUsers = asyncHandler(async (req, res) => {
             ]
         })
         .skip(limit * page)
-        .select("-password -refresh_token -createdAt -updatedAt")
+        .select("-password -email_token -refresh_token -createdAt -updatedAt")
         .sort({ "name": "asc" })
         .limit(limit)
 
@@ -79,9 +80,12 @@ export const createUser = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Password is required." });
     }
 
-    try {
-        console.log("user")
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+        return res.status(400).json({ message: passwordValidation.message });
+    }
 
+    try {
         const user = await User.create({ 
             name,
             username, 
@@ -145,13 +149,20 @@ export const updateUser = asyncHandler(async (req, res) => {
     const findByEmail = await User.findOne({ email })
     if (findByEmail && findByEmail.id !== user.id) return res.status(400).json({ message: "Email is already exists."})
 
+    if(password) {
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
+            return res.status(400).json({ message: passwordValidation });
+        }
+    }
+
     try {
         user.name = name
         user.username = username
         user.email = email
         if (password) user.password = password
         await user.save()
-        
+
         return res.status(200).json({ message: "User successfully updated." })
     } catch (error) {
         return res.status(400).json({ message: error.message })

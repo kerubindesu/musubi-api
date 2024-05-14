@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { sendResetPasswordEmail } from "../config/mailer.js";
 import generateResetToken from '../utils/generateResetToken.js';
 import { sendEmail } from "../config/mailer.js";
+import validatePassword from "../utils/passwordValidator.js";
 
 export const Login = asyncHandler( async(req, res) => {
     try {
@@ -91,7 +92,7 @@ export const getUserAuth = asyncHandler( async(req, res) => {
 
     try {
         if (refreshToken) {
-            const user = await User.findOne({refresh_token: refreshToken}).select("-_id -password -email -refresh_token -createDAt -updatedAt")
+            const user = await User.findOne({refresh_token: refreshToken}).select("-password -refresh_token -createDAt -updatedAt")
     
             return res.status(200).json({user})
         } else {
@@ -197,6 +198,16 @@ export const sendResetPasswordToken = asyncHandler( async (req, res) => {
 export const resetPassword = asyncHandler(async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
+
+    // validate password
+    if (!password) {
+        return res.status(400).json({ message: "Password is required." });
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+        return res.status(400).json({ message: passwordValidation });
+    }
 
     try {
         // Verifikasi token reset password
